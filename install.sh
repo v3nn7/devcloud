@@ -86,7 +86,22 @@ start_services() {
   log "Starting DevCloud with Docker Compose"
   $compose_cmd -f "$COMPOSE_FILE" up --build -d
   log "Services started"
-  sleep 2
+  local attempts=0
+  while (( attempts < 20 )); do
+    running="$($compose_cmd -f "$COMPOSE_FILE" ps --services --filter "status=running" server 2>/dev/null || true)"
+    if [[ "$running" == "server" ]]; then
+      break
+    fi
+    sleep 1
+    ((attempts++))
+  done
+
+  if [[ "$running" != "server" ]]; then
+    log "Server service failed to stay running. Showing recent logs:"
+    $compose_cmd -f "$COMPOSE_FILE" logs --tail 120 server || true
+    die "Server container is restarting. Check the logs above."
+  fi
+
   $compose_cmd -f "$COMPOSE_FILE" ps
 }
 

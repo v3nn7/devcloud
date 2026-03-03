@@ -1,17 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = (() => {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
-
-  const port = window.location.port;
-  if (port === "5173" || port === "3000") {
-    return `${window.location.protocol}//${window.location.hostname}:4000/api`;
-  }
-
-  return "/api";
-})();
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL

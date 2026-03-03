@@ -8,6 +8,10 @@ const allowedRoles = new Set(["admin", "dev", "viewer"]);
 
 export async function authRoutes(fastify) {
   fastify.post("/auth/register", async (request, reply) => {
+    if (!env.registrationEnabled) {
+      return reply.code(403).send({ message: "Registration is disabled" });
+    }
+
     const { email, password, role = "viewer" } = request.body || {};
 
     if (!email || !password) {

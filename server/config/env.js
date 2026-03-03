@@ -8,6 +8,15 @@ const toNumber = (value, fallback) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const toBoolean = (value, fallback) => {
+  if (value === undefined) {
+    return fallback;
+  }
+  return String(value).toLowerCase() === "true";
+};
+
+const registrationValue = process.env.REGISTER !== undefined ? process.env.REGISTER : process.env.REGISTER_ENABLED;
+
 export const env = {
   port: toNumber(process.env.PORT, 4000),
   nodeEnv: process.env.NODE_ENV || "development",
@@ -19,6 +28,7 @@ export const env = {
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean),
+  registrationEnabled: toBoolean(registrationValue, true),
   dbPath: process.env.DB_PATH || "./db/devcloud.db",
   uploadDir: path.resolve(process.cwd(), process.env.UPLOAD_DIR || "./uploads"),
   tempLinkTtlMinutes: toNumber(process.env.TEMP_LINK_TTL_MINUTES, 60),

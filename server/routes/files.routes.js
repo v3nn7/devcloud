@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import multer from "fastify-multer";
+import multipart from "@fastify/multipart";
 import { requireAuth } from "../middleware/auth.js";
 import { requireConfirmation } from "../middleware/confirm-action.js";
 import {
@@ -12,28 +12,35 @@ import {
 import { createShareLink, validateShareToken } from "../modules/files/share.service.js";
 import { liveLogs } from "../services/log.service.js";
 
-const upload = multer({ storage: multer.memoryStorage() });
-
 export async function filesRoutes(fastify) {
-  fastify.register(multer.contentParser);
+  await fastify.register(multipart);
+
+  const streamToBuffer = async (stream) => {
+    const chunks = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+  };
 
   fastify.post(
     "/files/upload",
-    { preHandler: [requireAuth, upload.single("file")] },
+    { preHandler: [requireAuth] },
     async (request, reply) => {
-      const file = request.file;
+      const file = await request.file();
       if (!file) {
         return reply.code(400).send({ message: "File is required" });
       }
 
+      const fileBuffer = await streamToBuffer(file.file);
       const folderPath = request.body?.folderPath || "/";
       const result = createFileRecord({
         userId: request.user.sub,
-        originalName: file.originalname,
+        originalName: file.filename,
         mimeType: file.mimetype,
-        size: file.size,
+        size: fileBuffer.length,
         folderPath,
-        buffer: file.buffer
+        buffer: fileBuffer
       });
 
       liveLogs.push({ level: "info", message: `File uploaded: ${result.original_name}` });

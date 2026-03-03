@@ -77,6 +77,14 @@ ensure_server_env() {
     echo "JWT_REFRESH_SECRET=$refresh_secret" >> "$SERVER_ENV"
   fi
 
+  if grep -q '^CORS_ORIGIN=' "$SERVER_ENV"; then
+    if ! grep -Fq "http://localhost:8080" "$SERVER_ENV"; then
+      sed -i "s|^CORS_ORIGIN=|CORS_ORIGIN=http://localhost:8080,|" "$SERVER_ENV"
+    fi
+  else
+    echo "CORS_ORIGIN=http://localhost:8080" >> "$SERVER_ENV"
+  fi
+
   if [[ ! -f "$SERVER_ENV" ]]; then
     die "Failed to create environment file"
   fi
